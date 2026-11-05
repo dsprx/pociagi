@@ -7,6 +7,9 @@
 #include <utility>
 #include <compare>
 #include <string>
+#include <deque>
+#include <numeric>
+#include <initializer_list>
 
 enum class WagonType : std::uint8_t {
   FIRST_CLASS = 54,
@@ -235,8 +238,98 @@ inline std::ostream& operator<<(std::ostream& os, const Locomotive& loc) {
 }
 
 class Train {
+private:
+  Locomotive locomotive_;
+  std::deque<Wagon> wagons_;
 
+  bool can_attach(const Wagon& wagon) const {
+    return wagon && size() < capacity();
+  }
+
+public:
+  Train() = default;
+
+  explicit Train(Locomotive&& locomotive, std::initializer_list<Wagon> wagons = {})
+    : locomotive_(std::move(locomotive)) {
+    for (const Wagon& wagon : wagons) {
+      if (can_attach(wagon)) {
+        wagons_.push_back(wagon);
+      }
+    }
+  }
+
+  Train(Train&& other)
+    : locomotive_(std::move(other.locomotive_)),
+      wagons_(std::move(other.wagons_)) {
+    other.wagons_.clear();
+  }
+
+  Train& operator=(Train&& other) {
+    if (this != &other) {
+      locomotive_ = std::move(other.locomotive_);
+      wagons_ = std::move(other.wagons_);
+      other.wagons_.clear();
+    }
+
+    return *this;
+  }
+
+  Train(const Train&) = delete;
+  Train& operator=(const Train&) = delete;
+
+  Train& operator+=(const Wagon& wagon) {
+    if (can_attach(wagon)) {
+      wagons_.push_back(wagon);
+    }
+
+    return *this;
+  }
+
+  Train& operator+=(Wagon&& wagon) {
+    if (can_attach(wagon)) {
+      wagons_.push_back(std::move(wagon));
+    }
+
+    return *this;
+  }
+
+  const Wagon& operator[](std::size_t pos) const {
+    return wagons_[pos];
+  }
+
+  std::size_t size() const {
+    return wagons_.size();
+  }
+
+  std::size_t capacity() const {
+    return locomotive_.max_wagons();
+  }
+
+  std::size_t seats() const {
+    return std::accumulate(wagons_.begin(), wagons_.end(), std::size_t{0},
+      [](std::size_t sum, const Wagon& wagon) {
+      return sum + wagon.series().seats();
+    });
+  }
+
+  const Locomotive& locomotive() const {
+    return locomotive_;
+  }
+
+  explicit operator bool() const {
+    return bool(locomotive_);
+  }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Train& train) {
+  os << "Skład: " << train.locomotive();
+
+  for (std::size_t i = 0; i < train.size(); ++i) {
+    os << "\n\t" << train[i];
+  }
+
+  return os;
+}
 
 class Depot {
 
