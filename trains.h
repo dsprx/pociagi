@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <ostream>
+#include <utility>
+#include <compare>
 
 enum class WagonType : std::uint8_t {
   FIRST_CLASS = 54,
@@ -70,8 +72,113 @@ inline constexpr WagonSeries STANDARD_SLEEPER(WagonType::SLEEPER);
 inline constexpr WagonSeries STANDARD_DINING(WagonType::DINING);
 
 class Wagon {
+public:
+  using unique_id_t = std::size_t;
 
+private:
+  static inline constexpr unique_id_t EMPTY_NUMBER = 0;
+  static inline constexpr WagonSeries DEFAULT_EMPTY_SERIES{WagonType::FIRST_CLASS};
+
+  static inline constinit unique_id_t ever_built_ = 0;
+  static inline constinit unique_id_t in_service_ = 0;
+
+  unique_id_t number_;
+  WagonSeries series_;
+
+  static unique_id_t assign_number() {
+    ++in_service_;
+    return ++ever_built_;
+  }
+
+  void release() {
+    if (*this) {
+      --in_service_;
+      number_ = EMPTY_NUMBER;
+    }
+  }
+
+public:
+  explicit Wagon(WagonSeries series) : number_(assign_number()), series_(series) {}
+
+  constexpr Wagon() : number_(EMPTY_NUMBER), series_(DEFAULT_EMPTY_SERIES) {}
+
+  Wagon(const Wagon& other)
+    : number_((other) ? assign_number() : EMPTY_NUMBER),
+      series_(other.series_) {}
+
+  constexpr Wagon(Wagon&& other)
+    : number_(std::exchange(other.number_, EMPTY_NUMBER)),
+      series_(other.series_) {}
+
+  ~Wagon() {
+    release();
+  }
+
+  Wagon& operator=(const Wagon& other) {
+    series_ = other.series_;
+
+    if (!other) {
+      release();
+    } else if (!(*this)) {
+      number_ = assign_number();
+    }
+
+    return *this;
+  }
+
+  Wagon& operator=(Wagon&& other) {
+    if (this != &other) {
+      release();
+
+      number_ = std::exchange(other.number_, EMPTY_NUMBER);
+      series_ = other.series_;
+    }
+
+    return *this;
+  }
+
+  constexpr unique_id_t number() const {
+    return number_;
+  }
+
+  constexpr WagonSeries series() const {
+    return series_;
+  }
+
+  constexpr operator WagonSeries() const {
+    return series_;
+  }
+
+  explicit constexpr operator bool() const {
+    return number_ != EMPTY_NUMBER;
+  }
+
+  constexpr bool operator==(const Wagon& other) const {
+    return number_ == other.number_;
+  }
+
+  constexpr std::strong_ordering operator<=>(const Wagon& other) const {
+    return number_ <=> other.number_;
+  }
+
+  static unique_id_t ever_built() {
+    return ever_built_;
+  }
+
+  static unique_id_t in_service() {
+    return in_service_;
+  }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Wagon& wagon) {
+  if (wagon) {
+    os << "Wagon nr " << wagon.number() << " " << wagon.series();
+  } else {
+    os << "Wagon pusty";
+  }
+
+  return os;
+}
 
 class Locomotive {
 
