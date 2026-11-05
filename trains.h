@@ -6,6 +6,7 @@
 #include <ostream>
 #include <utility>
 #include <compare>
+#include <string>
 
 enum class WagonType : std::uint8_t {
   FIRST_CLASS = 54,
@@ -181,8 +182,57 @@ inline std::ostream& operator<<(std::ostream& os, const Wagon& wagon) {
 }
 
 class Locomotive {
+private:
+  static inline constexpr std::size_t EMPTY_MAX_WAGONS = 0;
 
+  std::string designation_;
+  std::size_t max_wagons_;
+
+public:
+  explicit Locomotive(std::string designation, std::size_t max_wagons)
+    : designation_(designation.empty() ? "?" : std::move(designation)),
+      max_wagons_(max_wagons) {}
+
+  Locomotive() : designation_(), max_wagons_(EMPTY_MAX_WAGONS) {}
+
+  Locomotive(const Locomotive&) = delete;
+  Locomotive& operator=(const Locomotive&) = delete;
+
+  Locomotive(Locomotive&& other)
+    : designation_(std::exchange(other.designation_, std::string{})),
+      max_wagons_(std::exchange(other.max_wagons_, EMPTY_MAX_WAGONS)) {}
+
+  Locomotive& operator=(Locomotive&& other) {
+    if (this != &other) {
+      designation_ = std::exchange(other.designation_, std::string{});
+      max_wagons_ = std::exchange(other.max_wagons_, EMPTY_MAX_WAGONS);
+    }
+
+    return *this;
+  }
+
+  const std::string& designation() const {
+    return designation_;
+  }
+
+  std::size_t max_wagons() const {
+    return max_wagons_;
+  }
+
+  explicit operator bool() const {
+    return !designation_.empty();
+  }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Locomotive& loc) {
+  if (loc) {
+    os << loc.designation() << " (uciąg: " << loc.max_wagons() << ")";
+  } else {
+    os << "brak lokomotywy";
+  }
+
+  return os;
+}
 
 class Train {
 
