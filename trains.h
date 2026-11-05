@@ -101,13 +101,13 @@ private:
 public:
   explicit Wagon(WagonSeries series) : number_(assign_number()), series_(series) {}
 
-  constexpr Wagon() : number_(EMPTY_NUMBER), series_(DEFAULT_EMPTY_SERIES) {}
+  Wagon() : number_(EMPTY_NUMBER), series_(DEFAULT_EMPTY_SERIES) {}
 
   Wagon(const Wagon& other)
     : number_((other) ? assign_number() : EMPTY_NUMBER),
       series_(other.series_) {}
 
-  constexpr Wagon(Wagon&& other)
+  Wagon(Wagon&& other)
     : number_(std::exchange(other.number_, EMPTY_NUMBER)),
       series_(other.series_) {}
 
@@ -138,27 +138,27 @@ public:
     return *this;
   }
 
-  constexpr unique_id_t number() const {
+  unique_id_t number() const {
     return number_;
   }
 
-  constexpr WagonSeries series() const {
+  WagonSeries series() const {
     return series_;
   }
 
-  constexpr operator WagonSeries() const {
+  operator WagonSeries() const {
     return series_;
   }
 
-  explicit constexpr operator bool() const {
+  explicit operator bool() const {
     return number_ != EMPTY_NUMBER;
   }
 
-  constexpr bool operator==(const Wagon& other) const {
+  bool operator==(const Wagon& other) const {
     return number_ == other.number_;
   }
 
-  constexpr std::strong_ordering operator<=>(const Wagon& other) const {
+  std::strong_ordering operator<=>(const Wagon& other) const {
     return number_ <=> other.number_;
   }
 
