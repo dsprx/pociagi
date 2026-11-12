@@ -10,6 +10,8 @@
 #include <deque>
 #include <numeric>
 #include <initializer_list>
+#include <list>
+#include <algorithm>
 
 enum class WagonType : std::uint8_t {
   FIRST_CLASS = 54,
@@ -332,10 +334,129 @@ inline std::ostream& operator<<(std::ostream& os, const Train& train) {
 }
 
 class Depot {
+private:
+  std::list<Wagon> wagons_;
+  std::list<Locomotive> locomotives_;
 
+public:
+
+  Depot() = default;
+  Depot(const Depot&) = delete;
+  Depot& operator=(const Depot&) = delete;
+
+  Depot& operator+=(Wagon&& wagon) {
+    if (wagon) {
+      wagons_.push_back(std::move(wagon));
+    }
+    return *this;
+  }
+
+  Depot& operator+=(Locomotive&& locomotive) {
+    if (locomotive) {
+      locomotives_.push_back(std::move(locomotive));
+    }
+    return *this;
+  }
+
+  Locomotive release_locomotive() {
+    Locomotive locomotive = Locomotive{};
+    if (locomotives_.empty()) {
+      return locomotive;
+    }
+
+    locomotive = std::move(locomotives_.front());
+    locomotives_.pop_front();
+    return locomotive;
+  }
+
+  Wagon release_wagon(const WagonSeries& wagon_series) {
+    Wagon wagon = Wagon{};
+    if (wagons_.empty()) {
+      return wagon;
+    }
+    auto it = wagons_.begin();
+
+    while (it != wagons_.end()) {
+      if(it->series() == wagon_series) {
+        wagon = std::move(*it);
+        wagons_.erase(it);
+        break;
+      }
+      ++it;
+    }
+    return wagon;
+  }
+
+  std::size_t locomotives() const {
+    return locomotives_.size();
+  }
+
+  std::size_t wagons() const {
+    return wagons_.size();
+  }
+
+  std::size_t wagons(const WagonSeries& wagon_series) const {
+    std::size_t answere = 0;
+    auto it = wagons_.begin();
+    while (it != wagons_.end()) {
+      if (it->series() == wagon_series) {
+        answere++;
+      }
+      ++it;
+    }
+    return answere;
+  }
 };
 
+inline Depot& main_depot() {
+  static Depot main_depot;
+  static bool made = false;
+
+  if (!made) {
+    made = true;
+    main_depot += Locomotive("EU07-001", 8);
+    main_depot += Locomotive("EP09-020", 12);
+
+    main_depot += Wagon(STANDARD_FIRST_CLASS);
+    for (std::size_t i = 0; i < 4; i++) {
+      main_depot += Wagon(STANDARD_SECOND_CLASS);
+    }
+    for (std::size_t i = 0; i < 2; i++) {
+      main_depot += Wagon(STANDARD_SLEEPER);
+    }
+    main_depot += Wagon(STANDARD_DINING);
+  }
+  
+  return main_depot;
+}
+
 class Dispatcher {
+
+private:
+  Depot& depot_;
+
+public:
+
+  explicit Dispatcher(Depot& depot = main_depot()) : depot_(depot) {}
+  Dispatcher(Depot&&) = delete;
+  Dispatcher(const Dispatcher&) = default;
+  Dispatcher& operator=(const Dispatcher&) = delete;
+
+  const Depot& yard() const {
+    return depot_;
+  }
+
+  Train assemble(const WagonSeries& series, std::size_t number) {
+    if (depot_.locomotives() == 0) {
+      return Train{};
+    }
+
+    Train train(depot_.release_locomotive());
+    while (train.size() < number && train.size() < train.capacity() && depot_.wagons(series) > 0) {
+      train += depot_.release_wagon(series);
+    }
+    return train;
+  }
 
 };
 
