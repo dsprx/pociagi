@@ -377,7 +377,7 @@ public:
     auto it = wagons_.begin();
 
     while (it != wagons_.end()) {
-      if(it->series() == wagon_series) {
+      if (it->series() == wagon_series) {
         wagon = std::move(*it);
         wagons_.erase(it);
         break;
@@ -418,10 +418,10 @@ inline Depot& main_depot() {
     main_depot += Locomotive("EP09-020", 12);
 
     main_depot += Wagon(STANDARD_FIRST_CLASS);
-    for (std::size_t i = 0; i < 4; i++) {
+    for (std::size_t i = 0; i < 4; ++i) {
       main_depot += Wagon(STANDARD_SECOND_CLASS);
     }
-    for (std::size_t i = 0; i < 2; i++) {
+    for (std::size_t i = 0; i < 2; ++i) {
       main_depot += Wagon(STANDARD_SLEEPER);
     }
     main_depot += Wagon(STANDARD_DINING);
