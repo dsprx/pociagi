@@ -35,7 +35,6 @@ private:
 
     return "";
   }
-
 public:
   explicit constexpr WagonSeries(WagonType type, std::size_t seats)
     : type_(type), seats_(seats) {}
@@ -80,7 +79,6 @@ inline constexpr WagonSeries STANDARD_DINING(WagonType::DINING);
 class Wagon {
 public:
   using unique_id_t = std::size_t;
-
 private:
   static inline constexpr unique_id_t EMPTY_NUMBER = 0;
   static inline constexpr WagonSeries DEFAULT_EMPTY_SERIES{WagonType::FIRST_CLASS};
@@ -102,7 +100,6 @@ private:
       number_ = EMPTY_NUMBER;
     }
   }
-
 public:
   explicit Wagon(WagonSeries series) : number_(assign_number()), series_(series) {}
 
@@ -192,7 +189,6 @@ private:
 
   std::string designation_;
   std::size_t max_wagons_;
-
 public:
   explicit Locomotive(std::string designation, std::size_t max_wagons)
     : designation_(designation.empty() ? "?" : std::move(designation)),
@@ -247,7 +243,6 @@ private:
   bool can_attach(const Wagon& wagon) const {
     return wagon && size() < capacity();
   }
-
 public:
   Train() = default;
 
@@ -337,9 +332,7 @@ class Depot {
 private:
   std::list<Wagon> wagons_;
   std::list<Locomotive> locomotives_;
-
 public:
-
   Depot() = default;
   Depot(const Depot&) = delete;
   Depot& operator=(const Depot&) = delete;
@@ -348,6 +341,7 @@ public:
     if (wagon) {
       wagons_.push_back(std::move(wagon));
     }
+
     return *this;
   }
 
@@ -355,6 +349,7 @@ public:
     if (locomotive) {
       locomotives_.push_back(std::move(locomotive));
     }
+
     return *this;
   }
 
@@ -384,6 +379,7 @@ public:
       }
       ++it;
     }
+
     return wagon;
   }
 
@@ -396,15 +392,16 @@ public:
   }
 
   std::size_t wagons(const WagonSeries& wagon_series) const {
-    std::size_t answere = 0;
+    std::size_t answer = 0;
     auto it = wagons_.begin();
     while (it != wagons_.end()) {
       if (it->series() == wagon_series) {
-        answere++;
+        answer++;
       }
       ++it;
     }
-    return answere;
+
+    return answer;
   }
 };
 
@@ -414,8 +411,16 @@ inline Depot& main_depot() {
 
   if (!made) {
     made = true;
+
+    // Zajezdnia początkowo ma dwie lokomotywy:
+    // "EU07-001" (uciąg 8) i "EP09-020" (uciąg 12).
+
     main_depot += Locomotive("EU07-001", 8);
     main_depot += Locomotive("EP09-020", 12);
+
+    // Zajezdnia początkowo ma osiem wagonów serii standardowych w kolejności:
+    // jeden wagon klasy pierwszej, cztery wagony drugiej klasy, dwa wagony
+    // sypialne i jeden wagon restauracyjny.
 
     main_depot += Wagon(STANDARD_FIRST_CLASS);
     for (std::size_t i = 0; i < 4; ++i) {
@@ -431,12 +436,9 @@ inline Depot& main_depot() {
 }
 
 class Dispatcher {
-
 private:
   Depot& depot_;
-
 public:
-
   explicit Dispatcher(Depot& depot = main_depot()) : depot_(depot) {}
   Dispatcher(Depot&&) = delete;
   Dispatcher(const Dispatcher&) = default;
@@ -455,9 +457,9 @@ public:
     while (train.size() < number && train.size() < train.capacity() && depot_.wagons(series) > 0) {
       train += depot_.release_wagon(series);
     }
+
     return train;
   }
-
 };
 
 #endif  // TRAINS_HEADER_
