@@ -13,6 +13,8 @@
 #include <list>
 #include <algorithm>
 
+// Wartość liczbowa dla rodzaju wagonu to liczba miejsc w wagonach serii
+// standardowej danego rodzaju.
 enum class WagonType : std::uint8_t {
   FIRST_CLASS = 54,
   SECOND_CLASS = 80,
@@ -35,6 +37,7 @@ private:
 
     return "";
   }
+
 public:
   explicit constexpr WagonSeries(WagonType type, std::size_t seats)
     : type_(type), seats_(seats) {}
@@ -79,6 +82,7 @@ inline constexpr WagonSeries STANDARD_DINING(WagonType::DINING);
 class Wagon {
 public:
   using unique_id_t = std::size_t;
+
 private:
   static inline constexpr unique_id_t EMPTY_NUMBER = 0;
   static inline constexpr WagonSeries DEFAULT_EMPTY_SERIES{WagonType::FIRST_CLASS};
@@ -100,6 +104,7 @@ private:
       number_ = EMPTY_NUMBER;
     }
   }
+
 public:
   explicit Wagon(WagonSeries series) : number_(assign_number()), series_(series) {}
 
@@ -189,6 +194,7 @@ private:
 
   std::string designation_;
   std::size_t max_wagons_;
+
 public:
   explicit Locomotive(std::string designation, std::size_t max_wagons)
     : designation_(designation.empty() ? "?" : std::move(designation)),
@@ -243,6 +249,7 @@ private:
   bool can_attach(const Wagon& wagon) const {
     return wagon && size() < capacity();
   }
+
 public:
   Train() = default;
 
@@ -332,6 +339,7 @@ class Depot {
 private:
   std::list<Wagon> wagons_;
   std::list<Locomotive> locomotives_;
+
 public:
   Depot() = default;
   Depot(const Depot&) = delete;
@@ -394,6 +402,7 @@ public:
   std::size_t wagons(const WagonSeries& wagon_series) const {
     std::size_t answer = 0;
     auto it = wagons_.begin();
+
     while (it != wagons_.end()) {
       if (it->series() == wagon_series) {
         answer++;
@@ -423,21 +432,25 @@ inline Depot& main_depot() {
     // sypialne i jeden wagon restauracyjny.
 
     main_depot += Wagon(STANDARD_FIRST_CLASS);
+
     for (std::size_t i = 0; i < 4; ++i) {
       main_depot += Wagon(STANDARD_SECOND_CLASS);
     }
+
     for (std::size_t i = 0; i < 2; ++i) {
       main_depot += Wagon(STANDARD_SLEEPER);
     }
+
     main_depot += Wagon(STANDARD_DINING);
   }
-  
+
   return main_depot;
 }
 
 class Dispatcher {
 private:
   Depot& depot_;
+
 public:
   explicit Dispatcher(Depot& depot = main_depot()) : depot_(depot) {}
   Dispatcher(Depot&&) = delete;
